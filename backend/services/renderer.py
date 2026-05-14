@@ -29,8 +29,8 @@ def render_video(video_path: Path, subtitle_path: Path, output_path: Path, optio
         f"subtitles={_escape_subtitle_path(subtitle_path)}:"
         "charenc=UTF-8:"
         f"force_style='FontName=Liberation Sans,FontSize={options.font_size},"
-        "PrimaryColour=&H000000,BackColour=&HFFFFFF,BorderStyle=3,Outline=0,Shadow=0,"
-        f"Alignment={alignment},MarginV=50'"
+        "PrimaryColour=&H00000000,BackColour=&H00FFFFFF,BorderStyle=3,Outline=0,Shadow=0,"
+        f"Alignment={alignment},MarginV=25'"
     )
     cmd = [
         "ffmpeg",
