@@ -1,6 +1,7 @@
 import time
 from dataclasses import dataclass
 
+from pathlib import Path
 import google.generativeai as genai
 import pysrt
 
@@ -42,6 +43,23 @@ class GeminiTranslator:
             translated.extend(self._translate_batch(batch))
         translated.clean_indexes()
         return translated
+
+    def detect_position(self, video_path: Path) -> int:
+        uploaded = genai.upload_file(path=str(video_path))
+        while uploaded.state.name == "PROCESSING":
+            time.sleep(5)
+            uploaded = genai.get_file(uploaded.name)
+        
+        prompt = (
+            "Xac dinh vi tri phu de tieng Trung trong video nay. "
+            "Tinh khoang cach tu mep duoi video len phu de theo phan tram chieu cao video (0-100). "
+            "Tra ve DUY NHAT mot con so nguyen."
+        )
+        response = self.model.generate_content([uploaded, prompt])
+        try:
+            return int(response.text.strip())
+        except Exception:
+            return 25
 
     def _translate_batch(self, batch: TranslationBatch) -> list[pysrt.SubRipItem]:
         retries = [1, 2, 4]

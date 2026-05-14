@@ -21,7 +21,7 @@ class GeminiVideoTranscriber:
         genai.configure(api_key=settings.gemini_api_key)
         self.model = genai.GenerativeModel(settings.gemini_model)
 
-    def transcribe_to_vietnamese(self, video_path: Path) -> pysrt.SubRipFile:
+    def transcribe_to_vietnamese(self, video_path: Path) -> tuple[pysrt.SubRipFile, int]:
         logger.info("Gemini transcriber uploading video: %s", video_path)
         uploaded = genai.upload_file(path=str(video_path))
         while uploaded.state.name == "PROCESSING":
@@ -33,22 +33,24 @@ class GeminiVideoTranscriber:
 
         logger.info("Gemini file active, generating subtitle JSON: %s", uploaded.name)
         prompt = (
-            "Xem video nay va tao subtitle tieng Viet tu nhien. "
-            "Tra ve DUY NHAT JSON array. Moi phan tu co 3 key: start, end, text. "
-            "start/end la so giay dang thap phan voi 3 chu so sau dau phay. "
-            "text la cau subtitle tieng Viet. Khong tra ve markdown, khong giai thich."
+            "Xem video nay va thuc hien 2 viec:\n"
+            "1. Tao subtitle tieng Viet tu nhien (dich tu am thanh va phu de Trung neu co).\n"
+            "2. Xac dinh vi tri phu de tieng Trung (khoang cach tu mep duoi video len phu de, tinh theo phan tram chieu cao video, vi du: 15).\n"
+            "Tra ve DUY NHAT JSON object co 2 key: 'subtitles' (array) va 'margin_v_pct' (so nguyen 0-100).\n"
+            "Moi phan tu trong 'subtitles' co 3 key: start, end, text.\n"
+            "Khong tra ve markdown, khong giai thich."
         )
         response = self.model.generate_content([uploaded, prompt])
         raw = (response.text or "").strip().strip("`")
-        logger.info("Gemini returned subtitle payload length=%s", len(raw))
         if raw.startswith("json"):
             raw = raw[4:].strip()
         try:
-            items = json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise GeminiTranscriptionError("Gemini tra ve subtitle video sai dinh dang JSON.") from exc
-        if not isinstance(items, list) or not items:
-            raise GeminiTranscriptionError("Gemini khong tra ve segment subtitle hop le.")
+            data = json.loads(raw)
+            items = data.get("subtitles", [])
+            margin_v_pct = int(data.get("margin_v_pct", 25))
+        except (json.JSONDecodeError, ValueError, TypeError) as exc:
+            logger.error("Gemini raw response: %s", raw)
+            raise GeminiTranscriptionError("Gemini tra ve ket qua sai dinh dang JSON.") from exc
 
         subs = pysrt.SubRipFile()
         for index, item in enumerate(items, start=1):
@@ -65,6 +67,4 @@ class GeminiVideoTranscriber:
                     text=text,
                 )
             )
-        if len(subs) == 0:
-            raise GeminiTranscriptionError("Gemini khong tao duoc subtitle tu video.")
-        return subs
+        return subs, margin_v_pct

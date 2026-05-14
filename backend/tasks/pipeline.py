@@ -49,21 +49,29 @@ def process_job(job_id: str, url: str, options: dict) -> None:
         _set_stage(job_id, JobStage.extracting, 30)
         vi_srt_path = job_dir / "subtitle.vi.srt"
         subtitle_count = 0
+        margin_v_pct = 25
         try:
             _, source_subs = extract_subtitles(download)
             _set_stage(job_id, JobStage.translating, 55)
-            translated = GeminiTranslator().translate(source_subs)
+            translator = GeminiTranslator()
+            translated = translator.translate(source_subs)
             save_srt(translated, vi_srt_path)
             subtitle_count = len(translated)
+            
+            # Smart detection for source subs
+            try:
+                margin_v_pct = translator.detect_position(download.video_path)
+            except Exception:
+                margin_v_pct = 25
         except SubtitleExtractionError:
             _set_stage(job_id, JobStage.transcribing, 55)
-            transcribed = GeminiVideoTranscriber().transcribe_to_vietnamese(download.video_path)
+            transcribed, margin_v_pct = GeminiVideoTranscriber().transcribe_to_vietnamese(download.video_path)
             save_srt(transcribed, vi_srt_path)
             subtitle_count = len(transcribed)
 
         _set_stage(job_id, JobStage.rendering, 80)
         output_path = job_dir / "output.mp4"
-        render_video(download.video_path, vi_srt_path, output_path, subtitle_options)
+        render_video(download.video_path, vi_srt_path, output_path, subtitle_options, margin_v_pct=margin_v_pct)
 
         complete_job(
             job_id,
