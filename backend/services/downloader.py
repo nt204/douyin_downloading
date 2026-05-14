@@ -43,9 +43,15 @@ def _collect_subtitle_candidates(job_dir: Path) -> list[Path]:
 
 
 def _download_via_host_bridge(url: str, job_dir: Path, cookies_text: str) -> DownloadResult:
-    payload = resolve_video_via_host_bridge(url, cookies_text, job_dir)
     video_path = job_dir / "video.mp4"
     info_path = job_dir / "info.json"
+    try:
+        payload = resolve_video_via_host_bridge(url, cookies_text, job_dir)
+    except BrowserBridgeError:
+        if video_path.exists() and video_path.stat().st_size > 0 and info_path.exists():
+            payload = json.loads(info_path.read_text(encoding="utf-8"))
+        else:
+            raise
     if not video_path.exists() or video_path.stat().st_size == 0:
         raise BrowserBridgeError("Host bridge khong tao duoc file video tren thu muc dung chung.")
     info_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -66,12 +72,13 @@ def download_video(url: str, job_dir: Path) -> DownloadResult:
     resolved_cookie_path = resolve_cookie_path()
     cookiefile = str(resolved_cookie_path) if resolved_cookie_path else None
     cookies_text = resolved_cookie_path.read_text(encoding="utf-8", errors="ignore") if resolved_cookie_path else ""
+    bridge_error: str | None = None
 
     if cookies_text and settings.host_downloader_url:
         try:
             return _download_via_host_bridge(normalized_url, job_dir, cookies_text)
-        except BrowserBridgeError:
-            pass
+        except BrowserBridgeError as exc:
+            bridge_error = str(exc)
 
     ydl_opts = {
         "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
@@ -113,11 +120,13 @@ def download_video(url: str, job_dir: Path) -> DownloadResult:
             if cookies_text and settings.host_downloader_url:
                 try:
                     return _download_via_host_bridge(normalized_url, job_dir, cookies_text)
-                except BrowserBridgeError:
-                    pass
-            raise DownloaderError(
-                "Douyin yeu cau cookies moi. Host bridge va yt-dlp deu khong lay duoc video tu session hien tai."
-            ) from exc
+                except BrowserBridgeError as bridge_exc:
+                    bridge_error = str(bridge_exc)
+            message = "Douyin yeu cau cookies moi hoac session cookie chua hop le cho trang video nay."
+            if bridge_error:
+                message += f" Host bridge: {bridge_error}."
+            message += f" yt-dlp: {error_text}"
+            raise DownloaderError(message) from exc
         if "Unsupported URL" in error_text:
             raise DownloaderError(
                 "URL Douyin nay khong duoc ho tro truc tiep. He thong da thu resolve sang dang /video/, "
@@ -130,7 +139,7 @@ def download_video(url: str, job_dir: Path) -> DownloadResult:
             ) from exc
         raise DownloaderError(
             "Video khong the tai. Kiem tra lai cookies.txt, URL co con hoat dong, "
-            "hoac video dang private/bi xoa."
+            f"hoac video dang private/bi xoa. yt-dlp: {error_text}"
         ) from exc
 
     video_candidates = sorted(job_dir.glob("video.*"))

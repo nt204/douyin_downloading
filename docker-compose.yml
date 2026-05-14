@@ -12,6 +12,7 @@ services:
       - ./runtime:/app/runtime
     depends_on:
       - redis
+      - bridge
 
   worker:
     build:
@@ -25,6 +26,16 @@ services:
       - ./runtime:/app/runtime
     depends_on:
       - redis
+      - bridge
+
+  bridge:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bridge
+    ports:
+      - "8765:8765"
+    volumes:
+      - /tmp/jobs:/tmp/jobs
 
   redis:
     image: redis:7-alpine

@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    chromium-driver \
+    fonts-noto-core \
+    fonts-liberation \
+    fonts-dejavu-core \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY docker/bridge-requirements.txt .
+RUN pip install --no-cache-dir -r bridge-requirements.txt
+
+COPY scripts /app/scripts
+
+ENV CHROME_BINARY=/usr/bin/chromium
+ENV CHROMEDRIVER_BINARY=/usr/bin/chromedriver
+
+CMD ["python3", "scripts/host_bridge_server.py"]

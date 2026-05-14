@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     job_timeout_minutes: int = Field(15, alias="JOB_TIMEOUT_MINUTES")
     app_version: str = Field("1.0.0", alias="APP_VERSION")
     api_base_url: str = Field("http://localhost:8000", alias="API_BASE_URL")
-    host_downloader_url: str | None = Field("http://host.docker.internal:8765", alias="HOST_DOWNLOADER_URL")
+    host_downloader_url: str | None = Field("http://bridge:8765", alias="HOST_DOWNLOADER_URL")
 
     model_config = SettingsConfigDict(
         env_file=".env",
