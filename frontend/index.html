@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Douyin Video Translator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body class="min-h-screen bg-stone-950 text-stone-100">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.14),_transparent_28%),linear-gradient(180deg,_#0c0a09,_#1c1917)]"></div>
+    <main class="relative mx-auto flex min-h-screen max-w-5xl items-center px-6 py-12">
+      <section class="grid w-full gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+        <div class="rounded-[2rem] border border-stone-800 bg-stone-900/80 p-8 shadow-2xl shadow-amber-500/10 backdrop-blur">
+          <p class="mb-4 text-sm uppercase tracking-[0.35em] text-amber-300">Douyin Translator</p>
+          <h1 class="max-w-2xl font-serif text-4xl leading-tight text-stone-50 md:text-6xl">
+            Tai video Douyin, dich subtitle bang Gemini va burn thang vao MP4.
+          </h1>
+          <p class="mt-5 max-w-xl text-base leading-7 text-stone-300">
+            Pipeline gom download, trich xuat subtitle TQ, dich Trung-Viet bang Gemini key cua ban, sau do render ra video hoan chinh de tai xuong.
+          </p>
+
+          <form id="job-form" class="mt-10 space-y-6">
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-stone-200">URL Douyin</span>
+              <input
+                id="url"
+                type="url"
+                required
+                placeholder="https://www.douyin.com/video/..."
+                class="w-full rounded-2xl border border-stone-700 bg-stone-950 px-5 py-4 text-stone-50 outline-none transition focus:border-amber-300"
+              />
+            </label>
+
+            <details class="rounded-2xl border border-stone-800 bg-stone-950/70 p-5">
+              <summary class="cursor-pointer text-sm font-semibold text-stone-200">Tuy chon subtitle</summary>
+              <div class="mt-5 grid gap-4 md:grid-cols-3">
+                <label class="block">
+                  <span class="mb-2 block text-sm text-stone-300">Co chu</span>
+                  <input id="font-size" type="number" min="16" max="60" value="24" class="w-full rounded-xl border border-stone-700 bg-stone-900 px-4 py-3" />
+                </label>
+                <label class="block">
+                  <span class="mb-2 block text-sm text-stone-300">Mau chu</span>
+                  <select id="font-color" class="w-full rounded-xl border border-stone-700 bg-stone-900 px-4 py-3">
+                    <option value="white">White</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="cyan">Cyan</option>
+                    <option value="green">Green</option>
+                    <option value="red">Red</option>
+                  </select>
+                </label>
+                <label class="block">
+                  <span class="mb-2 block text-sm text-stone-300">Vi tri</span>
+                  <select id="position" class="w-full rounded-xl border border-stone-700 bg-stone-900 px-4 py-3">
+                    <option value="bottom">Bottom</option>
+                    <option value="top">Top</option>
+                  </select>
+                </label>
+              </div>
+            </details>
+
+            <button
+              id="submit-btn"
+              type="submit"
+              class="inline-flex items-center justify-center rounded-full bg-amber-300 px-7 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Tao job
+            </button>
+          </form>
+        </div>
+
+        <aside class="rounded-[2rem] border border-stone-800 bg-stone-900/70 p-8 backdrop-blur">
+          <div id="empty-state">
+            <p class="text-sm uppercase tracking-[0.3em] text-emerald-300">Trang thai</p>
+            <h2 class="mt-4 font-serif text-3xl text-stone-50">Cho job dau tien.</h2>
+            <p class="mt-4 text-stone-300">Sau khi submit, he thong se hien progress, stage va link tai video/subtitle.</p>
+          </div>
+
+          <div id="job-state" class="hidden">
+            <div class="flex items-center justify-between">
+              <p class="text-sm uppercase tracking-[0.3em] text-emerald-300">Tien trinh</p>
+              <span id="progress-label" class="text-sm text-stone-300">0%</span>
+            </div>
+            <div class="mt-4 h-3 overflow-hidden rounded-full bg-stone-800">
+              <div id="progress-bar" class="h-full w-0 rounded-full bg-gradient-to-r from-amber-300 to-emerald-300 transition-all duration-500"></div>
+            </div>
+            <p id="stage-label" class="mt-5 text-lg text-stone-100"></p>
+            <p id="meta-label" class="mt-2 text-sm text-stone-400"></p>
+
+            <div id="result-panel" class="mt-8 hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+              <h3 id="video-title" class="text-xl font-semibold text-stone-50"></h3>
+              <p id="video-meta" class="mt-2 text-sm text-stone-300"></p>
+              <div class="mt-5 flex flex-wrap gap-3">
+                <a id="download-video" class="rounded-full bg-emerald-300 px-5 py-3 text-sm font-semibold text-stone-950">Tai MP4</a>
+                <a id="download-srt" class="rounded-full border border-stone-600 px-5 py-3 text-sm font-semibold text-stone-100">Tai SRT</a>
+              </div>
+            </div>
+
+            <div id="error-panel" class="mt-8 hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-5">
+              <p class="text-sm uppercase tracking-[0.25em] text-red-300">Error</p>
+              <p id="error-message" class="mt-3 text-stone-100"></p>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

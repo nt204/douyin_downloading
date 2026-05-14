@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+Douyin_Translator_Plan.docx
+backend/**/__pycache__/
+frontend/**/__pycache__/

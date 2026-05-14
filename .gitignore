@@ -1,0 +1,14 @@
+.env
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+/tmp/
+/dist/
+/build/
+/htmlcov/
+/runtime/
+.hostbridge-venv/
+.selenium-venv/
